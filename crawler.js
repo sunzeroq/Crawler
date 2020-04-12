@@ -5,67 +5,86 @@ const fs = require('fs')
 const syncrequest = require('syncrequest')
 const cheerio = require('cheerio')
 const request = require('request')
+//node-readability 支持GBK格式
 var read = require('node-readability');
 
 
 const cacheFiles = (url) => {
     let cacheFile = "cached_html/" + url.split('/').pop()
-    let existFile = fs.existsSync(cacheFile)
-    if (existFile) {
+
+    let isFlieExist = fs.existsSync(cacheFile)
+    if (isFlieExist) {
         console.log('exist');
         let data = fs.readFileSync(cacheFile)
-        // console.log(data);
-
         return data
     } else {
-        let r = syncrequest.get.sync(url)
-        // console.log(r);
-        let body = r.bodynpm
-
-        fs.writeFileSync(cacheFile, body)
-        return body
+        let data = null
+        read(url, function (err, article, meta) {
+            fs.writeFileSync(cacheFile, article.html)
+            data = article.html
+        });
+        return data
     }
 }
-const __main = () => {
-    // 主函数
-    //todo网站缓存乱码
-    let url = 'http://www.hetu2.com/toplist/6_11_3.html'
-    // read(url, function (err, article, meta) {
-    //     let cacheFile = "cached_html/" + url.split('/').pop()
-    //     fs.writeFileSync(cacheFile, article.html)
-    // });
-    let body = cacheFiles(url)
-    //cheerio加载html
-    let e = cheerio.load(body)
 
+const parseHtml = (html) => {
     let arr = []
+    let e = cheerio.load(html)
     let list = e('.list').children('.listable')
+
     list.each(function (item) {
-        var div = e(this);
+        let div = e(this);
 
+        let textDiv = div.find('.dysx')
+        let href = e(textDiv.find('a')[1]).attr('href')
+        let text = e(textDiv.find('a')[1]).attr('title').split('TXT')[0]
 
-        var textDiv = div.find('.dysx')
-        var href = e(textDiv.find('a')[1]).attr('href')
-        var text = e(textDiv.find('a')[1]).attr('title')
-        var des = textDiv.text()
+        let des = textDiv.text().split("\n")
+
         arr.push({
             src: href,
             t: text,
-            des: des,
+            hot: des[1],
+            size: des[2],
+            updataTime: des[3],
         })
     })
 
+    return arr
+}
+const saveAsJson = (arr, path) => {
     let s = JSON.stringify(arr, null, 2)
     // 把 json 格式字符串写入到 文件 中
-    let path = 'douban.json'
     fs.writeFileSync(path, s)
-    console.log(s)
+}
 
+//todo promise
+const wait = () => {
+    setTimeout(() => {
+        console.log('aaa');
+    }, 1000)
+}
+const __main = () => {
+    let r = []
+    let urlArr = []
+    for (let i = 1; i < 5; i++) {
+        let url = 'http://www.hetu2.com/toplist/6_11_' + i + '.html'
+        urlArr.push(url)
 
-    // let movies = moviesFromUrl(url)
-    // saveMovie(movies)
-    // cacheFiles(url)
-    // console.log('抓取成功, 数据已经写入到 douban.json 中')
+    }
+
+    for (let i = 0; i < urlArr.length; i++) {
+        //加载 解析 html
+        let html = cacheFiles(urlArr[i])
+        if (html) {
+            let arr = parseHtml(html)
+            r = r.concat(arr)
+        }
+
+    }
+
+    let path = 'result.json'
+    saveAsJson(r, path)
 }
 
 __main()
