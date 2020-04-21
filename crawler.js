@@ -5,6 +5,7 @@ const fs = require('fs')
 const syncrequest = require('syncrequest')
 const cheerio = require('cheerio')
 const request = require('request')
+
 //node-readability 支持GBK格式
 var read = require('node-readability');
 
@@ -60,31 +61,48 @@ const saveAsJson = (arr, path) => {
 
 //todo promise
 const wait = () => {
-    setTimeout(() => {
-        console.log('aaa');
-    }, 1000)
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve();
+        }, 1000);
+    });
 }
+
+
+async function write() {
+    for (let i = 0; i < 15; i++) {
+        let url = 'http://www.hetu2.com/toplist/6_11_' + i + '.html'
+        // urlArr.push(url)
+        let html = cacheFiles(url)
+        console.log(url)
+        await wait(console.log('ok'))
+    }
+
+}
+
 const __main = () => {
     let r = []
     let urlArr = []
-    for (let i = 1; i < 5; i++) {
-        let url = 'http://www.hetu2.com/toplist/6_11_' + i + '.html'
-        urlArr.push(url)
+    // for (let i = 1; i < 4; i++) {
+    //     let url = 'http://www.hetu2.com/toplist/6_11_' + i + '.html'
+    //     urlArr.push(url)
+    //     let html = cacheFiles(url)
+    //     console.log(url)
 
-    }
+    // }
+    write()
+    // for (let i = 0; i < urlArr.length; i++) {
+    //     //加载 解析 html
+    //     let html = cacheFiles(urlArr[i])
+    //     if (html) {
+    //         let arr = parseHtml(html)
+    //         r = r.concat(arr)
+    //     }
 
-    for (let i = 0; i < urlArr.length; i++) {
-        //加载 解析 html
-        let html = cacheFiles(urlArr[i])
-        if (html) {
-            let arr = parseHtml(html)
-            r = r.concat(arr)
-        }
-
-    }
+    // }
 
     let path = 'result.json'
-    saveAsJson(r, path)
+    // saveAsJson(r, path)
 }
 
 __main()
