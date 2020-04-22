@@ -12,6 +12,7 @@ var read = require('node-readability');
 
 const cacheFiles = (url) => {
     let cacheFile = "cached_html/" + url.split('/').pop()
+    console.log('cached');
 
     let isFlieExist = fs.existsSync(cacheFile)
     if (isFlieExist) {
@@ -59,50 +60,47 @@ const saveAsJson = (arr, path) => {
     fs.writeFileSync(path, s)
 }
 
-//todo promise
 const wait = () => {
     return new Promise(resolve => {
         setTimeout(() => {
             resolve();
-        }, 1000);
+        }, 2000);
     });
 }
 
 
-async function write() {
-    for (let i = 0; i < 15; i++) {
+async function delayCacheFiles() {
+    let urlArr = []
+    for (let i = 1; i < 6; i++) {
         let url = 'http://www.hetu2.com/toplist/6_11_' + i + '.html'
-        // urlArr.push(url)
-        let html = cacheFiles(url)
-        console.log(url)
-        await wait(console.log('ok'))
+        urlArr.push(url)
+        await wait(cacheFiles(url))
     }
-
+    return urlArr
 }
 
 const __main = () => {
     let r = []
-    let urlArr = []
-    // for (let i = 1; i < 4; i++) {
-    //     let url = 'http://www.hetu2.com/toplist/6_11_' + i + '.html'
-    //     urlArr.push(url)
-    //     let html = cacheFiles(url)
-    //     console.log(url)
+    delayCacheFiles()
+        .then(res => {
+            let urlArr = res
+            for (let i = 0; i < urlArr.length; i++) {
+                //加载 解析 html
+                let html = cacheFiles(urlArr[i])
+                if (html) {
+                    let arr = parseHtml(html)
+                    r = r.concat(arr)
+                }
 
-    // }
-    write()
-    // for (let i = 0; i < urlArr.length; i++) {
-    //     //加载 解析 html
-    //     let html = cacheFiles(urlArr[i])
-    //     if (html) {
-    //         let arr = parseHtml(html)
-    //         r = r.concat(arr)
-    //     }
+            }
 
-    // }
+            let path = 'result.json'
+            saveAsJson(r, path)
+            console.log('end');
 
-    let path = 'result.json'
-    // saveAsJson(r, path)
+        })
+
+
 }
 
 __main()
